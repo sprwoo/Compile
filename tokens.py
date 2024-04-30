@@ -1,29 +1,35 @@
+from position import *
+
 ##########################################
 # TOKENS
 
-TT_INT = 'TT_INT'
-TT_FLOAT = 'FLOAT'
-TT_ADD = 'ADD'
-TT_MINUS = 'MINUS'
-TT_MUL = 'MUL'
-TT_DIV = 'DIV'
-TT_OPEN = 'OPEN'
-TT_CLOSE = 'RCLOSE'
-TT_EOF = 'EOF'
+# Token types
+TT_INT = 'TT_INT'       # Integer
+TT_FLOAT = 'FLOAT'      # Float
+TT_ADD = 'ADD'          # Addition
+TT_MINUS = 'MINUS'      # Subtraction / Negation
+TT_MUL = 'MUL'          # Multiplication
+TT_DIV = 'DIV'          # Division
+TT_OPEN = 'OPEN'        # Open bracket
+TT_CLOSE = 'RCLOSE'     # Close bracket
+TT_EOF = 'EOF'          # End of File
 
 class Token: 
-    def __init__(self, type_, value=None, pos_start=None, pos_end=None):
+    # Constructor
+    def __init__(self, type_, value=None, position_start=None, position_end=None):
         self.type = type_
         self.value = value
 
-        if pos_start:
-            self.pos_start = pos_start.copy()
-            self.pos_end = pos_start.copy()
-            self.pos_end.advance()
+        # If position_start/end was given, initialize it as given
+        if position_start:
+            self.position_start = position_start.copy()
+            self.position_end = position_start.copy()
+            self.position_end.advance()
         
-        if pos_end:
-            self.pos_end = pos_end
+        if position_end:
+            self.position_end = position_end
 
+    # Print
     def __repr__(self):
         if self.value: return f'{self.type}:{self.value}'
         return f'{self.type}'

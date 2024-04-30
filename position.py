@@ -2,6 +2,7 @@
 # POSITION
 
 class Position:
+    # Constructor
     def __init__(self, idx, ln, col, fn, ftxt):
         self.idx = idx
         self.ln = ln
@@ -9,10 +10,12 @@ class Position:
         self.fn = fn
         self.ftxt = ftxt
 
+    # Change position every time character is advanced
     def advance(self, current_char=None):
         self.idx += 1
         self.col += 1
 
+        # Increment line counter, reset column counter if there is a newline
         if current_char == '\n':
             self.ln += 1
             self.col = 0

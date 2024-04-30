@@ -1,9 +1,9 @@
 from lexer import *
 from basicparser import *
 
-def run(fn, text):
+def run(filename, text):
     # Generate Tokens
-    lexer = Lexer(fn, text)
+    lexer = Lexer(filename, text)
     tokens, error = lexer.make_tokens()
     if error: return None, error
 

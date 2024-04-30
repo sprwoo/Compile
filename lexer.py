@@ -3,60 +3,72 @@ from position import *
 from errors import *
 
 DIGITS = "0123456789"
+
 ##########################################
 # LEXER
 
 class Lexer:
-    def __init__(self, fn, text):
-        self.fn = fn
+    # Constructor
+    def __init__(self, filename, text):
+        self.filename = filename
         self.text = text
-        self.pos = Position(-1, 0, -1, fn, text)
+        self.position = Position(-1, 0, -1, filename, text)
         self.current_char = None
         self.advance()
     
+    # Advance to the next character
     def advance(self):
-        self.pos.advance(self.current_char)
-        self.current_char = self.text[self.pos.idx] if self.pos.idx < len(self.text) else None
+        self.position.advance(self.current_char)
+        self.current_char = self.text[self.position.idx] if self.position.idx < len(self.text) else None
 
+    # Create the tokens
     def make_tokens(self):
         tokens = []
         while self.current_char != None:
             if self.current_char in ' \t':
-                self.advance()
+                # Skip if it is either a whitespace or tab
+                pass
             elif self.current_char in DIGITS:
+                # If the character is a number, we will read in every subsequent number
+                # to form one number
                 tokens.append(self.make_number())
+
+            # Basic operators
             elif self.current_char == '+':
-                tokens.append(Token(TT_ADD, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_ADD, position_start = self.position))
+
             elif self.current_char == '-':
-                tokens.append(Token(TT_MINUS, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_MINUS, position_start = self.position))
+
             elif self.current_char == '*':
-                tokens.append(Token(TT_MUL, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_MUL, position_start = self.position))
+
             elif self.current_char == '/':
-                tokens.append(Token(TT_DIV, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_DIV, position_start = self.position))
+
             elif self.current_char == '(':
-                tokens.append(Token(TT_OPEN, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_OPEN, position_start = self.position))
+
             elif self.current_char == ')':
-                tokens.append(Token(TT_CLOSE, pos_start = self.pos))
-                self.advance()
+                tokens.append(Token(TT_CLOSE, position_start = self.position))
+                
             else:
-                pos_start = self.pos.copy()
+                position_start = self.position.copy()
                 char = self.current_char
                 self.advance()
-                return [], IllegalCharError(pos_start, self.pos, "'" + char + "'")
+                return [], IllegalCharError(position_start, self.position, "'" + char + "'")
+            self.advance()
 
-        tokens.append(Token(TT_EOF, pos_start = self.pos))
+        # Attach the end of file token once done reading in all characters in the file
+        tokens.append(Token(TT_EOF, position_start = self.position))
         return tokens, None
     
     def make_number(self):
         num_str = ''
         dot_count = 0
-        pos_start = self.pos.copy()
+        position_start = self.position.copy()
 
+        # Read in every subsequent number, as well as any decimal points to form one number
         while self.current_char != None and self.current_char in DIGITS + '.':
             if self.current_char == '.':
                 if dot_count == 1: break
@@ -66,7 +78,8 @@ class Lexer:
                 num_str += self.current_char
             self.advance()
         
+        # Return it as an integer if there are no decimals, otherwise as a float
         if dot_count == 0:
-            return Token(TT_INT, int(num_str), pos_start, self.pos)
+            return Token(TT_INT, int(num_str), position_start, self.position)
         else:
-            return Token(TT_FLOAT, float(num_str), pos_start, self.pos)
+            return Token(TT_FLOAT, float(num_str), position_start, self.position)

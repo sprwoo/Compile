@@ -5,21 +5,30 @@ from nodes import *
 ##########################################
 # PARSE RESULT
 
+# ParseResult tells us if there is a parsing error
 class ParseResult:
+    # Constructor
     def __init__(self):
         self.error = None
         self.node = None
     
-    def register(self, res):
-        if isinstance(res, ParseResult):
-            if res.error: self.error = res.error
-            return res.node
-        return res
+    # result is either a ParseResult or Node
+    def register(self, result):
+        # Check if result is a ParseResult
+        if isinstance(result, ParseResult):
+            # Return the error is result represents an error
+            if result.error: self.error = result.error
+            return result.node
+        
+        # Return the node
+        return result
     
+    # Successful parse
     def success(self, node):
         self.node = node
         return self
     
+    # Failure in parsing
     def failure(self, error):
         self.error = error
         return self
@@ -28,66 +37,88 @@ class ParseResult:
 # PARSER
 
 class Parser:
+    # Constructor
     def __init__(self, tokens):
         self.tokens = tokens
-        self.tok_idx = -1
+        self.token_idx = -1
         self.advance()
     
+    # Advance tokens
     def advance(self):
-        self.tok_idx += 1
-        if self.tok_idx < len(self.tokens):
-            self.current_tok = self.tokens[self.tok_idx]
-        return self.current_tok
+        self.token_idx += 1
 
+        # Return tokens while it is within the array of tokens we need to process
+        if self.token_idx < len(self.tokens):
+            self.current_token = self.tokens[self.token_idx]
+        return self.current_token
+
+    # Parse every token in the array until it reaches the end of the file
     def parse(self):
-        res = self.expr()
-        if not res.error and self.current_tok.type != TT_EOF:
-            return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end, 
+        result = self.expr()
+        if not result.error and self.current_token.type != TT_EOF:
+            # Return a syntax error if result is an error
+            return result.failure(InvalidSyntaxError(self.current_token.position_start, self.current_token.position_end, 
                                "Expected '+', '-', '*' or '/'"))
-        return res
+        return result
 
+    # A factor is int/float
+    # It also sorts out the order of operations we must do
     def factor(self):
-        res = ParseResult()
-        tok = self.current_tok
+        result = ParseResult()
+        token = self.current_token
         
-        if tok.type in (TT_ADD, TT_MINUS):
-            res.register(self.advance())
-            factor = res.register(self.factor())
-            if res.error: return res
-            return res.success(UnaryOpNode(tok, factor))
+        # If token is +/-, 
+        if token.type in (TT_ADD, TT_MINUS):
+            result.register(self.advance())
+            factor = result.register(self.factor())
+            if result.error: return result
+            return result.success(UnaryOpNode(token, factor))
 
-        elif tok.type in (TT_INT, TT_FLOAT):
-            res.register(self.advance())
-            return res.success(NumberNode(tok))
+        # If the token is a number, we can return a successful parse and a NumberNode
+        elif token.type in (TT_INT, TT_FLOAT):
+            result.register(self.advance())
+            return result.success(NumberNode(token))
         
-        elif tok.type == TT_OPEN:
-            res.register(self.advance())
-            expr = res.register(self.expr())
-            if res.error: return res
-            if self.current_tok.type == TT_CLOSE:
-                res.register(self.advance())
-                return res.success(expr)
-            else: return res.failure(InvalidSyntaxError(self.current_tok.pos_start, self.current_tok.pos_end,
+        # If token is an open bracket, we need to evaluate these first
+        # Advance until we find the close bracket, otherwise return an error 
+        elif token.type == TT_OPEN:
+            result.register(self.advance())
+            expr = result.register(self.expr())
+            if result.error: return result
+            if self.current_token.type == TT_CLOSE:
+                result.register(self.advance())
+                return result.success(expr)
+            
+            # Return an error
+            else: return result.failure(InvalidSyntaxError(self.current_token.position_start, self.current_token.position_end,
                                                         "Expected ')'"))
         
-        return res.failure(InvalidSyntaxError(tok.pos_start, tok.pos_end, "Expected int or float"))
+        return result.failure(InvalidSyntaxError(token.position_start, token.position_end, "Expected int or float"))
     
+    # Find the "terms" of the equation by looking for * or /
     def term(self):
         return self.bin_op(self.factor, (TT_MUL, TT_DIV))
 
+    # Find the "expressions" of the equations by looking for + or -
     def expr(self):
         return self.bin_op(self.term, (TT_ADD, TT_MINUS))
     
-    def bin_op(self, func, ops):
-        res = ParseResult()
-        left = res.register(func())
-        if res.error: return res
+    # Evaluate the binary operations
+    def bin_op(self, func, operators):
+        result = ParseResult()
 
-        while self.current_tok.type in ops:
-            op_tok = self.current_tok
-            res.register(self.advance())
-            right = res.register(func())
-            if res.error: return res
+        # Grab the left factor/term
+        left = result.register(func())
+        if result.error: return result
 
-            left = BinOpNode(left, op_tok, right)
-        return res.success(left)
+        # Check if the current token's type is the ones we are looking for
+        while self.current_token.type in operators: 
+            operator_token = self.current_token
+            result.register(self.advance())
+
+            # Grab the right factor/term
+            right = result.register(func())
+            if result.error: return result
+
+            left = BinOpNode(left, operator_token, right)
+        return result.success(left)
