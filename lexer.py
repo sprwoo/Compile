@@ -27,37 +27,35 @@ class Lexer:
         while self.current_char != None:
             if self.current_char in ' \t':
                 # Skip if it is either a whitespace or tab
-                pass
+                self.advance()
             elif self.current_char in DIGITS:
                 # If the character is a number, we will read in every subsequent number
                 # to form one number
                 tokens.append(self.make_number())
-
             # Basic operators
             elif self.current_char == '+':
                 tokens.append(Token(TT_ADD, position_start = self.position))
-
+                self.advance()
             elif self.current_char == '-':
                 tokens.append(Token(TT_MINUS, position_start = self.position))
-
+                self.advance()
             elif self.current_char == '*':
                 tokens.append(Token(TT_MUL, position_start = self.position))
-
+                self.advance()
             elif self.current_char == '/':
                 tokens.append(Token(TT_DIV, position_start = self.position))
-
+                self.advance()
             elif self.current_char == '(':
                 tokens.append(Token(TT_OPEN, position_start = self.position))
-
+                self.advance()
             elif self.current_char == ')':
                 tokens.append(Token(TT_CLOSE, position_start = self.position))
-                
+                self.advance()
             else:
                 position_start = self.position.copy()
                 char = self.current_char
                 self.advance()
                 return [], IllegalCharError(position_start, self.position, "'" + char + "'")
-            self.advance()
 
         # Attach the end of file token once done reading in all characters in the file
         tokens.append(Token(TT_EOF, position_start = self.position))

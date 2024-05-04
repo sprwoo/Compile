@@ -1,5 +1,7 @@
 from lexer import *
 from basicparser import *
+from interpreter import *
+from context import *
 
 def run(filename, text):
     # Generate Tokens
@@ -10,5 +12,11 @@ def run(filename, text):
     # Generate AST
     parser = Parser(tokens)
     ast = parser.parse()
+    if ast.error: return None, ast.error
 
-    return ast.node, ast.error
+    # Run interpreter
+    interpreter = Interpreter()
+    context = Context('<root>')
+    result = interpreter.visit(ast.node, context)
+
+    return result.value, result.error

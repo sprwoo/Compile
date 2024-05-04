@@ -97,14 +97,14 @@ class Parser:
     
     # Find the "terms" of the equation by looking for * or /
     def term(self):
-        return self.bin_op(self.factor, (TT_MUL, TT_DIV))
+        return self.binary_op(self.factor, (TT_MUL, TT_DIV))
 
     # Find the "expressions" of the equations by looking for + or -
     def expr(self):
-        return self.bin_op(self.term, (TT_ADD, TT_MINUS))
+        return self.binary_op(self.term, (TT_ADD, TT_MINUS))
     
     # Evaluate the binary operations
-    def bin_op(self, func, operators):
+    def binary_op(self, func, operators):
         result = ParseResult()
 
         # Grab the left factor/term
@@ -120,5 +120,5 @@ class Parser:
             right = result.register(func())
             if result.error: return result
 
-            left = BinOpNode(left, operator_token, right)
+            left = BinaryOpNode(left, operator_token, right)
         return result.success(left)
